@@ -1,0 +1,41 @@
+## 🧠 Sample Arduino Code (ESP8266 + Blynk)
+
+```cpp
+#define BLYNK_PRINT Serial
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+char auth[] = "Your_Blynk_Auth_Token";
+char ssid[] = "Your_WiFi_Name";
+char pass[] = "Your_WiFi_Password";
+
+#define sensor A0
+#define waterPump D3
+
+BlynkTimer timer;
+bool Relay = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(waterPump, OUTPUT);
+  digitalWrite(waterPump, HIGH);
+  Blynk.begin(auth, ssid, pass, "blynk.cloud", 80);
+  timer.setInterval(100L, soilMoistureSensor);
+}
+
+BLYNK_WRITE(V1) {
+  Relay = param.asInt();
+  digitalWrite(waterPump, Relay ? LOW : HIGH);
+}
+
+void soilMoistureSensor() {
+  int value = analogRead(sensor);
+  value = map(value, 0, 1024, 0, 100);
+  value = (value - 100) * -1;
+  Blynk.virtualWrite(V0, value);
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+}
